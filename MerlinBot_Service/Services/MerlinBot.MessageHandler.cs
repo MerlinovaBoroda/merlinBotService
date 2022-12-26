@@ -53,7 +53,7 @@ public partial class MerlinBotService
             if (message.ReplyToMessage != null)
             {
                 //Check if message is sticker
-                if (message.Sticker != null)
+                /*if (message.Sticker != null)
                 {
                     //Check if Sticker emoji Contains like or dislike
                     if (message.Sticker.Emoji.Contains("👍") || message.Sticker.Emoji.Contains("👎"))
@@ -77,7 +77,7 @@ public partial class MerlinBotService
                     }
 
                     return;
-                }
+                }*/
 
                 //Check if message starts with + or -
                 if (message.Text!.StartsWith("+") || message.Text.StartsWith("-"))

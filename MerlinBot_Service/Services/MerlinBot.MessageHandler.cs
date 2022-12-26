@@ -1,6 +1,8 @@
-﻿using MerlinBot_Service.Controllers;
-using Telegram.BotAPI;
+﻿using Telegram.BotAPI;
+using Telegram.BotAPI.AvailableMethods;
 using Telegram.BotAPI.AvailableTypes;
+using static MerlinBot_Service.Stuff.Messages;
+using static MerlinBot_Service.Stuff.Gifs;
 
 namespace MerlinBot_Service.Services;
 
@@ -14,6 +16,7 @@ public partial class MerlinBotService
             return;
         }
 
+        var appUser = message.From; // Save current user;
         var hasText = !string.IsNullOrEmpty(message.Text); // True if message has text;
 
 #if DEBUG
@@ -21,27 +24,94 @@ public partial class MerlinBotService
         _logger.LogInformation("Message: {MessageContent}", hasText ? message.Text : "No text");
 #endif
 
-        base.OnMessage(message);
-        
-        var splitedText = message.Text?.Split(' ');
-        foreach (var word in splitedText!)
+        // Only private Chats
+        if (message.Chat.Type == ChatType.Private)
         {
-            var list = new List<char>();
-            for (var c = 'a'; c <= 'z'; ++c) {
-                list.Add(c);
+            Helpers.SavePrivateChat(appUser);
+        }
+        else // Only group chats
+        {
+            //Save chat and user tu database
+            Helpers.SaveChat(message);
+
+            if (message.LeftChatMember != null)
+            {
+                var leftUser = message.LeftChatMember;
+                if (leftUser.IsBot) return;
+
+                Helpers.RemoveUserFromDatabases(message, leftUser);
+
+                var random = new Random();
+                await Api.SendMessageAsync(
+                    chatId: message.Chat.Id,
+                    text: $"@{leftUser.Username}{LeftMessages[random.Next(LeftMessages.Length)]}"
+                );
             }
 
-            var letterInWord = word.ToLower().ToCharArray().ToList().FirstOrDefault();
-            if (list.Contains(letterInWord))
+            //Karma count
+            //Check if message is reply 
+            if (message.ReplyToMessage != null)
             {
-                var result = await UrbanDictionaryController.SearchForWord(word);
-                if (result != null)
+                //Check if message is sticker
+                if (message.Sticker != null)
                 {
-                    
+                    //Check if Sticker emoji Contains like or dislike
+                    if (message.Sticker.Emoji.Contains("👍") || message.Sticker.Emoji.Contains("👎"))
+                    {
+                        if (!Helpers.CheckKarmaMessage(Api, message))
+                        {
+                            return;
+                        }
+
+                        //Add karma
+                        if (message.Sticker!.Emoji.Contains("👍"))
+                        {
+                            Helpers.SendPlusKarma(Api, message);
+                        }
+
+                        //Subtract karma
+                        if (message.Sticker.Emoji.Contains("👎"))
+                        {
+                            Helpers.SendMinusKarma(Api, message);
+                        }
+                    }
+
+                    return;
+                }
+
+                //Check if message starts with + or -
+                if (message.Text!.StartsWith("+") || message.Text.StartsWith("-"))
+                {
+                    if (!Helpers.CheckKarmaMessage(Api, message)) return;
+                    //Add karma
+                    if (message.Text!.StartsWith("+") || message.Text.StartsWith("👍"))
+                    {
+                        Helpers.SendPlusKarma(Api, message);
+                    }
+                    //Subtract karma
+                    if (message.Text.StartsWith("-") || message.Text.StartsWith("👎"))
+                    {
+                        Helpers.SendMinusKarma(Api, message);
+                    }
+                }
+                //Check if message starts with like or dislike emoji
+                else if (message.Text.StartsWith("👍") || message.Text.StartsWith("👎"))
+                {
+                    if (!Helpers.CheckKarmaMessage(Api, message)) return;
+                    //Add karma
+                    if (message.Text!.StartsWith("+") || message.Text.StartsWith("👍"))
+                    {
+                        Helpers.SendPlusKarma(Api, message);
+                    }
+                    //Subtract karma
+                    if (message.Text.StartsWith("-") || message.Text.StartsWith("👎"))
+                    {
+                        Helpers.SendMinusKarma(Api, message);
+                    }
                 }
             }
-            
-            Console.WriteLine(word);
         }
+
+        base.OnMessage(message);
     }
 }

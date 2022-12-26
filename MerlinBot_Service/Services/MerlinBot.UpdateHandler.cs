@@ -14,7 +14,7 @@ namespace MerlinBot_Service.Services
 #if DEBUG
             _logger.LogInformation("New update with id: {0}. Type: {1}", update.UpdateId, update.Type.ToString("F"));
 #endif
-
+            
             base.OnUpdate(update);
         }
     }

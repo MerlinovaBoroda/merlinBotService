@@ -102,13 +102,13 @@ public class Helpers
         {
             //check title for special symbols and replace them with "-"
             var shortTitle = message.Chat.Title;
-            if (message.Chat.Title.Length > 20)
+            if (message.Chat.Title!.Length > 20)
             {
                 shortTitle = message.Chat.Title[..20];
             }
 
             var rgx = new Regex("[*'\",_&#^@]");
-            shortTitle = rgx.Replace(shortTitle, string.Empty);
+            shortTitle = rgx.Replace(shortTitle!, string.Empty);
 
             var chat = new Chat
             {
@@ -518,7 +518,7 @@ public class Helpers
         }
 
         var randomUsernamesList = usernames.OrderBy(_ => Guid.NewGuid()).Take(5).ToList();
-        randomUsernamesList.Add(from!.Username);
+        randomUsernamesList.Add(from!.Username!);
 
         var names = (from username in randomUsernamesList
             let firstName = db.Users!.FirstOrDefault(c => c.Username == username)!.FullName

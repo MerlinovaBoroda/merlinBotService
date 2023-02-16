@@ -29,28 +29,37 @@ public class Worker : BackgroundService
             {
                 Parallel.ForEach(updates, ProcessUpdate);
 
-                updates = await _api.GetUpdatesAsync(updates[^1].UpdateId + 1, cancellationToken: stoppingToken).ConfigureAwait(false);
+                try
+                {
+                    updates = await _api.GetUpdatesAsync(updates[^1].UpdateId + 1, cancellationToken: stoppingToken)
+                        .ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             }
             else
             {
-                updates = await _api.GetUpdatesAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
+                try
+                {
+                    updates = await _api.GetUpdatesAsync(cancellationToken: stoppingToken).ConfigureAwait(false);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
             }
         }
     }
 
     private void ProcessUpdate(Update update)
     {
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var bot = scope.ServiceProvider.GetRequiredService<MerlinBotService>();
-            bot.OnUpdate(update);
-        }
-        catch (Exception e)
-        {
-            Console.WriteLine(e);
-            throw;
-        }
+        using var scope = _serviceProvider.CreateScope();
+        var bot = scope.ServiceProvider.GetRequiredService<MerlinBotService>();
+        bot.OnUpdate(update);
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)

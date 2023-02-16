@@ -32,10 +32,6 @@ public class Helpers
                 $"The work directory was created successfully at {Directory.GetCreationTime(PathToJsonFiles)}. " +
                 $"Work path: {PathToJsonFiles}");
         }
-        else
-        {
-            Console.WriteLine("Work directory already exists.");
-        }
 #endif
 
         var db = new BotContext();
@@ -51,10 +47,6 @@ public class Helpers
 #if DEBUG
                 Console.Out.WriteLineAsync(
                     $"File '{chatName}.json' created successfully at {File.GetCreationTime(file)}");
-            }
-            else
-            {
-                Console.Out.WriteLineAsync($"File '{chatName}.json' already exists");
             }
 #endif
         }
@@ -332,16 +324,6 @@ public class Helpers
 
     public static bool CheckKarmaMessage(BotClient bot, Message message)
     {
-        var charString = message.Text!.ToCharArray();
-        
-        if (charString.Length > 1)
-        {
-            if (char.IsLetter(charString[1]) || charString[1] == ' ')
-            {
-                return false;
-            }
-        }
-
         //Check if user replied to Bot
         if (message.ReplyToMessage!.From!.IsBot)
         {
@@ -352,8 +334,8 @@ public class Helpers
             );
             return false;
         }
-
-        //Check if user replied to himself
+        
+        // Check if user replied to himself
         if (message.From!.Id == message.ReplyToMessage!.From!.Id)
         {
             bot.SendMessage(
@@ -364,7 +346,13 @@ public class Helpers
             return false;
         }
 
-        return true;
+        if (message.Sticker is not null) return true;
+
+        if (message.Text is null) return true;
+        var charString = message.Text.ToCharArray();
+
+        if (charString.Length <= 1) return true;
+        return !char.IsLetter(charString[1]) && charString[1] != ' ';
     }
 
     public static void SendPlusKarma(BotClient bot, Message message)
@@ -504,7 +492,6 @@ public class Helpers
                     ? message.ReplyToMessage.MessageId
                     : message.MessageId
             );
-            Console.WriteLine($"There were less than two registered users in the chat: {chatId}");
             return;
         }
 

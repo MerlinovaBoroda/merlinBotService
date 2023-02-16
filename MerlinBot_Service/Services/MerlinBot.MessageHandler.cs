@@ -2,7 +2,6 @@
 using Telegram.BotAPI.AvailableMethods;
 using Telegram.BotAPI.AvailableTypes;
 using static MerlinBot_Service.Stuff.Messages;
-using static MerlinBot_Service.Stuff.Gifs;
 
 namespace MerlinBot_Service.Services;
 
@@ -48,19 +47,15 @@ public partial class MerlinBotService
 
             //Karma count
             //Check if message is reply 
-            if (message.ReplyToMessage != null && message.Text != null)
+            if (message.ReplyToMessage is not null)
             {
                 //Check if message is sticker
-                /*if (message.Sticker != null)
+                if (message.Sticker is not null)
                 {
                     //Check if Sticker emoji Contains like or dislike
                     if (message.Sticker.Emoji.Contains("👍") || message.Sticker.Emoji.Contains("👎"))
                     {
-                        if (!Helpers.CheckKarmaMessage(Api, message))
-                        {
-                            return;
-                        }
-
+                        if (!Helpers.CheckKarmaMessage(Api, message)) return;
                         //Add karma
                         if (message.Sticker!.Emoji.Contains("👍"))
                         {
@@ -73,46 +68,56 @@ public partial class MerlinBotService
                             Helpers.SendMinusKarma(Api, message);
                         }
                     }
+                }
 
-                    return;
-                }*/
-
-                //Check if message starts with + or -
-                if (message.Text.StartsWith("+") || message.Text.StartsWith("-"))
+                //Check if message is text and not empty
+                if (message.Text is not null)
                 {
-                    if (!Helpers.CheckKarmaMessage(Api, message)) return;
-                    //Add karma
-                    if (message.Text.StartsWith("+") || message.Text.StartsWith("👍"))
+                    //Check if message starts with + or -
+                    if (message.Text.StartsWith("+") || message.Text.StartsWith("-"))
                     {
-                        Helpers.SendPlusKarma(Api, message);
+                        if (!Helpers.CheckKarmaMessage(Api, message)) return;
+                        //Add karma
+                        if (message.Text.StartsWith("+"))
+                        {
+                            Helpers.SendPlusKarma(Api, message);
+                        }
+
+                        //Subtract karma
+                        if (message.Text.StartsWith("-"))
+                        {
+                            Helpers.SendMinusKarma(Api, message);
+                        }
                     }
 
-                    //Subtract karma
-                    if (message.Text.StartsWith("-") || message.Text.StartsWith("👎"))
+                    //Check if message starts with like or dislike emoji
+                    else if (message.Text.StartsWith("👍") || message.Text.StartsWith("👎"))
                     {
-                        Helpers.SendMinusKarma(Api, message);
+                        if (!Helpers.CheckKarmaMessage(Api, message)) return;
+                        //Add karma
+                        if (message.Text.StartsWith("👍"))
+                        {
+                            Helpers.SendPlusKarma(Api, message);
+                        }
+
+                        //Subtract karma
+                        if (message.Text.StartsWith("👎"))
+                        {
+                            Helpers.SendMinusKarma(Api, message);
+                        }
                     }
                 }
-                /*
-                //Check if message starts with like or dislike emoji
-                else if (message.Text.StartsWith("👍") || message.Text.StartsWith("👎"))
-                {
-                    if (!Helpers.CheckKarmaMessage(Api, message)) return;
-                    //Add karma
-                    if (message.Text!.StartsWith("+") || message.Text.StartsWith("👍"))
-                    {
-                        Helpers.SendPlusKarma(Api, message);
-                    }
-
-                    //Subtract karma
-                    if (message.Text.StartsWith("-") || message.Text.StartsWith("👎"))
-                    {
-                        Helpers.SendMinusKarma(Api, message);
-                    }
-                }*/
             }
         }
 
-        base.OnMessage(message);
+        try
+        {
+            base.OnMessage(message);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 }

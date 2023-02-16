@@ -27,7 +27,7 @@ public class Worker : BackgroundService
         {
             if (updates.Any())
             {
-                Parallel.ForEach(updates, (update) => ProcessUpdate(update));
+                Parallel.ForEach(updates, ProcessUpdate);
 
                 updates = await _api.GetUpdatesAsync(updates[^1].UpdateId + 1, cancellationToken: stoppingToken).ConfigureAwait(false);
             }
@@ -40,9 +40,17 @@ public class Worker : BackgroundService
 
     private void ProcessUpdate(Update update)
     {
-        using var scope = _serviceProvider.CreateScope();
-        var bot = scope.ServiceProvider.GetRequiredService<MerlinBotService>();
-        bot.OnUpdate(update);
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var bot = scope.ServiceProvider.GetRequiredService<MerlinBotService>();
+            bot.OnUpdate(update);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)

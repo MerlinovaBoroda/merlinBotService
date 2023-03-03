@@ -18,6 +18,7 @@ public class BotContext : DbContext
         // const Environment.SpecialFolder folder = Environment.SpecialFolder.LocalApplicationData;
         // var path = Environment.GetFolderPath(folder);
         DbPath = Path.Join(Helpers.PathToProjectFiles, "MerlinBot.db");
+        Console.WriteLine(DbPath);
     }
 
     // The following configures EF to create a Sqlite database file in the

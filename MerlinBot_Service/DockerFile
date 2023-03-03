@@ -1,11 +1,16 @@
-FROM mcr.microsoft.com/dotnet/sdk:6.0-focal AS build
-WORKDIR /source
-COPY . .
-RUN dotnet restore MerlinBot_service.csproj --disable-parallel
-RUN dotnet publish MerlinBot_service.csproj -c release -o /app --no-restore
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build-env
+WORKDIR /App
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0-focal
-WORKDIR /app
-COPY --from=build /app ./
+# Copy everything
+COPY . ./
+# Restore as distinct layers
+RUN dotnet restore
+# Build and publish a release
+RUN dotnet publish -c Release -o out
+
+# Build runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
+WORKDIR /App
+COPY --from=build-env /App/out .
 
 ENTRYPOINT ["dotnet", "MerlinBot_Service.dll"]

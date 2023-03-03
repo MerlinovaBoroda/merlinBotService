@@ -15,24 +15,24 @@ using static MerlinBot_Service.Stuff.Messages;
 
 namespace MerlinBot_Service;
 
-public class Helpers
+public static class Helpers
 {
     private static readonly string? ProjectName = Assembly.GetEntryAssembly()!.GetName().Name;
     private const Environment.SpecialFolder Folder = Environment.SpecialFolder.LocalApplicationData;
     public static readonly string PathToProjectFiles = Environment.GetFolderPath(Folder) + $"/{ProjectName}/";
     private static readonly string PathToJsonFiles = Path.Join(PathToProjectFiles, "ChatsJson/");
 
-    public static void CheckSettingsFile()
+    private static void CheckSettingsFile()
     {
         if (!Directory.Exists(PathToJsonFiles))
         {
             Directory.CreateDirectory(PathToJsonFiles);
-#if DEBUG
+
             Console.WriteLine(
                 $"The work directory was created successfully at {Directory.GetCreationTime(PathToJsonFiles)}. " +
                 $"Work path: {PathToJsonFiles}");
         }
-#endif
+
 
         var db = new BotContext();
         var chatsNames = db.Chats!.Select(c => c.ChatName).ToList();
@@ -44,11 +44,10 @@ public class Helpers
             {
                 var lfw = new LastBybloWinner { Username = "", LastWinnerDate = DateTime.Today.AddDays(-1) };
                 File.WriteAllTextAsync(file, JsonConvert.SerializeObject(lfw, Formatting.Indented));
-#if DEBUG
+
                 Console.Out.WriteLineAsync(
                     $"File '{chatName}.json' created successfully at {File.GetCreationTime(file)}");
             }
-#endif
         }
     }
 
@@ -67,7 +66,7 @@ public class Helpers
         {
             UserId = fromId,
             FullName = user.FirstName,
-            Username = user.Username,
+            Username = user.Username!,
             UserType = "user",
             TimeZone = TimeZoneInfo.Local.Id
         };
@@ -334,7 +333,7 @@ public class Helpers
             );
             return false;
         }
-        
+
         // Check if user replied to himself
         if (message.From!.Id == message.ReplyToMessage!.From!.Id)
         {

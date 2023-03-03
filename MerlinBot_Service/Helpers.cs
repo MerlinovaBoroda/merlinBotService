@@ -27,7 +27,7 @@ public static class Helpers
         if (!Directory.Exists(PathToJsonFiles))
         {
             Directory.CreateDirectory(PathToJsonFiles);
-
+            
             Console.WriteLine(
                 $"The work directory was created successfully at {Directory.GetCreationTime(PathToJsonFiles)}. " +
                 $"Work path: {PathToJsonFiles}");

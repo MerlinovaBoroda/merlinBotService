@@ -57,6 +57,9 @@ public static class Helpers
     {
         using var db = new BotContext();
         var fromId = user!.Id;
+        
+        //Return if user has no username (fuck this users)
+        if (user.Username == null) return;
 
         //Return if user already exists in database
         if (db.Users!.Any(c => c.UserId == fromId)) return;

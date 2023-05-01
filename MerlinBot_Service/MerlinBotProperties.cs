@@ -9,6 +9,8 @@ namespace MerlinBot_Service;
 public sealed class MerlinBotProperties : IBotProperties
 {
     private readonly BotCommandHelper _commandHelper;
+    public int BackgroundServiceMaxRetries { get; set; } = 5;
+    public TimeSpan BackgroundServiceRetryDelay { get; set; } = TimeSpan.FromSeconds(10);
 
     public MerlinBotProperties(IConfiguration configuration)
     {

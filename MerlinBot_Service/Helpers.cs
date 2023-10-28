@@ -474,6 +474,21 @@ public static class Helpers
         );
     }
 
+    public static void SetKarmaCountAsAdmin(BotClient bot, string username, int karma, string chatName)
+    {
+        var db = new BotContext();
+
+        var chat = db.Chats!.FirstOrDefault(c => c.ChatName.ToLower().Contains(chatName.ToLower()));
+        var user = db.Users!.FirstOrDefault(c => c.Username.ToLower().Contains(username.Substring(1)));
+        var karmaTo = db.UsersToChats!.FirstOrDefault(c =>
+            c.UserId == user!.UserId && c.ChatId == chat!.ChatId);
+
+        if (karmaTo is null || user is null) return;
+        
+        karmaTo.KarmaCount = karma;
+        db.SaveChanges();
+    }
+
     #endregion
 
     public static void PlayCtrlGame(Message message, BotClient bot)

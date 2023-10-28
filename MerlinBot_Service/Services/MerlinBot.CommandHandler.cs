@@ -1,6 +1,5 @@
 ﻿using MerlinBot_Service.Controllers;
 using MerlinBot_Service.Models;
-using Telegram.BotAPI;
 using Telegram.BotAPI.AvailableMethods;
 using Telegram.BotAPI.AvailableMethods.FormattingOptions;
 using Telegram.BotAPI.AvailableTypes;
@@ -15,66 +14,100 @@ public partial class MerlinBotService
     {
         var db = new BotContext();
         var args = commandParameters.Split(' ');
+        
 #if DEBUG
         _logger.LogInformation("Params: {0}", args.Length);
 #endif
 
         switch (commandName)
         {
-            case "meaning":
-                if (args != null)
+            case "setkarma":
+            {
+                if (args.Length is 3)
                 {
-                    var result = UrbanDictionaryController.SearchForWord(args[0].ToLower()).Result?.list
-                        .Take(5);
-                    switch (result!.Count())
+                    var messageFrom = db.Users!.FirstOrDefault(c=> c.UserId == message.From!.Id);
+                    if (message.Chat.Type==ChatType.Private && messageFrom!.UserType=="admin")
                     {
-                        case 0:
+                        if (args[0].StartsWith("@"))
+                        {
+                            var karma = Convert.ToInt32(args[1]);
+                            var chatName = args[2];
+                            var username = args[0].Trim();
+                            Helpers.SetKarmaCountAsAdmin( Api, username, karma, chatName); 
+                        }
+                        else
+                        {
                             Api.SendMessage(
                                 chatId: message.Chat.Id,
-                                text:
-                                "Вибачте, такого слова не було знайдено. Перевірте правильність написання слова і команди (має бути лише 1 пробіл між командою та словом)\n" +
-                                "Правильне застосування команди: /meaning *термін, слово*\n" +
-                                "Наприклад, /meaning lmao",
-                                replyToMessageId: message.MessageId
-                            );
-                            break;
-                        case 1:
-                            var one = UrbanDictionaryController.SearchForWord(args[0].ToLower()).Result?.list
-                                .FirstOrDefault();
-                            Api.SendMessage(
-                                chatId: message.Chat.Id,
-                                text: $"Слово: {one.word}\n\n" +
-                                      $"Пояснення: {one.definition}\n\n" +
-                                      $"Приклад: {one.example}\n\n" +
-                                      $"Автор пояснення: {one.author}\n" +
-                                      $"Дата: {one.written_on}\n" +
-                                      $"Посилання: {one.permalink}",
-                                replyToMessageId: message.MessageId
-                            );
-                            break;
-
-                        case > 1:
-                            var buttonItem = result!.Select(c => c.defid.ToString()).ToList();
-                            var keyboard =
-                                new InlineKeyboardMarkup(
-                                    UrbanDictionaryController.GetInlineKeyboardForUrbanDictionary(buttonItem));
-
-                            Api.SendMessage(
-                                chatId: message.Chat.Id,
-                                text: "Є кілька пояснень цього слова!",
-                                replyToMessageId: message.MessageId,
-                                replyMarkup: keyboard
-                            );
-                            break;
+                                text: "You write the command incorrectly...",
+                                replyToMessageId: message.MessageId);
+                        }
+                    }
+                    else
+                    {
+                        Api.SendMessage(
+                            chatId: message.Chat.Id,
+                            text: "You are not allowed to use this command",
+                            replyToMessageId: message.MessageId);
                     }
                 }
                 else
                 {
                     Api.SendMessage(
                         chatId: message.Chat.Id,
-                        text: "Правильне застосування команди: /meaning *термін, слово*\nНаприклад, /meaning lmao",
+                        text: "You write the command incorrectly...",
                         replyToMessageId: message.MessageId);
                 }
+                
+            }
+                break;
+            
+            case "meaning":
+            {
+                var result = UrbanDictionaryController.SearchForWord(args[0].ToLower()).Result?.list
+                    .Take(5);
+                switch (result!.Count())
+                {
+                    case 0:
+                        Api.SendMessage(
+                            chatId: message.Chat.Id,
+                            text:
+                            "Вибачте, такого слова не було знайдено. Перевірте правильність написання слова і команди (має бути лише 1 пробіл між командою та словом)\n" +
+                            "Правильне застосування команди: /meaning *термін, слово*\n" +
+                            "Наприклад, /meaning lmao",
+                            replyToMessageId: message.MessageId
+                        );
+                        break;
+                    case 1:
+                        var one = UrbanDictionaryController.SearchForWord(args[0].ToLower()).Result?.list
+                            .FirstOrDefault();
+                        Api.SendMessage(
+                            chatId: message.Chat.Id,
+                            text: $"Слово: {one.word}\n\n" +
+                                  $"Пояснення: {one.definition}\n\n" +
+                                  $"Приклад: {one.example}\n\n" +
+                                  $"Автор пояснення: {one.author}\n" +
+                                  $"Дата: {one.written_on}\n" +
+                                  $"Посилання: {one.permalink}",
+                            replyToMessageId: message.MessageId
+                        );
+                        break;
+
+                    case > 1:
+                        var buttonItem = result!.Select(c => c.defid.ToString()).ToList();
+                        var keyboard =
+                            new InlineKeyboardMarkup(
+                                UrbanDictionaryController.GetInlineKeyboardForUrbanDictionary(buttonItem));
+
+                        Api.SendMessage(
+                            chatId: message.Chat.Id,
+                            text: "Є кілька пояснень цього слова!",
+                            replyToMessageId: message.MessageId,
+                            replyMarkup: keyboard
+                        );
+                        break;
+                }
+            }
 
                 break;
 
@@ -91,13 +124,13 @@ public partial class MerlinBotService
                         from p in pol
                         select new
                         {
-                            x.KarmaCount, p.Username
+                            x.KarmaCount, p.ChatName
                         };
                     var i = 1;
 
                     foreach (var one in result)
                     {
-                        text += $"{i}. <b>{one.Username}</b> — <b>{one.KarmaCount}</b>\n";
+                        text += $"{i}. <b>{one.ChatName}</b> — <b>{one.KarmaCount}</b>\n";
                         ++i;
                     }
 

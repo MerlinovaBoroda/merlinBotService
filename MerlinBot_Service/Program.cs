@@ -1,6 +1,5 @@
 using MerlinBot_Service;
 using MerlinBot_Service.Services;
-using Microsoft.Extensions.Hosting;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
